@@ -33,6 +33,9 @@ Valence, arousal, and dominance #4: [[0.24804251 0.33543587 0.50990975]]
 Valence, arousal, and dominance #5: [[0.38564402 0.43214017 0.37035757]]
 ```
 
+## Demo
+[![asciicast](https://asciinema.org/a/1XhSclhNuVsfG6bBCPoQLwvN1.svg)](https://asciinema.org/a/1XhSclhNuVsfG6bBCPoQLwvN1)
+
 ## Original repo  
 https://github.com/audeering/w2v2-how-to
 
