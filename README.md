@@ -5,8 +5,15 @@ A wrapper for Audeering's wav2vector-based dimensional speech emotion recognitio
     pip3 install -r requirements.txt
     
 ## Usage
-    python3 predict_vad_w2v2.py input.wav
-    
+    python3 predict_vad_w2v2.py -i input.wav
+
+## Arguments
+```
+-i input file  
+-s split: chunks or full  
+-d duration in seconds (if split is chunks)  
+```
+
 ## Example
 
 ```
