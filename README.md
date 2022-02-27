@@ -1,5 +1,5 @@
 # w2v2-vad
-A wrapper for Audeering's wav2vector-based dimensional speech emotion recognition.
+A wrapper for Audeering's wav2vector-based dimensional speech emotion recognition (valence, arousal, dominance).
 
 ## Installation
     pip3 install -r requirements.txt
