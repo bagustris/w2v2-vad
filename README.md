@@ -1,6 +1,11 @@
 # w2v2-vad
 A wrapper for Audeering's wav2vector-based dimensional speech emotion recognition (valence, arousal, dominance).
 
+## Input-output
+input: wav, 16000 Hz  
+output:  score of valence, arousal, and dominance in range [-1, 1]  
+
+
 ## Installation
     pip3 install -r requirements.txt
     
@@ -27,5 +32,8 @@ Valence, arousal, and dominance #3: [[0.29967275 0.4038131  0.4949872 ]]
 Valence, arousal, and dominance #4: [[0.24804251 0.33543587 0.50990975]]
 Valence, arousal, and dominance #5: [[0.38564402 0.43214017 0.37035757]]
 ```
+
+## Original repo  
+https://github.com/audeering/w2v2-how-to
 
 All credit goes to Audeering.
