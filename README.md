@@ -3,7 +3,7 @@ A wrapper for Audeering's wav2vector-based dimensional speech emotion recognitio
 
 ## Input-output
 input: wav, 16000 Hz  
-output:  score of valence, arousal, and dominance in range [-1, 1]  
+output:  score of valence, arousal, and dominance in range [0, 1]  
 
 
 ## Installation
