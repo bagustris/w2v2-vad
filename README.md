@@ -2,7 +2,7 @@
 A wrapper for Audeering's wav2vector-based dimensional speech emotion recognition (valence, arousal, dominance).
 
 ## Input-output
-input: wav, at any sample rate (will be resampled to 16000 Hz on the fly)  
+input: any audio file readable by librosa at any sample rate (will be resampled to 16000 Hz on the fly)  
 output:  score of valence, arousal, and dominance in a range [0, 1]  
 
 
@@ -34,7 +34,7 @@ Valence, arousal, and dominance #4: [[0.24804251 0.33543587 0.50990975]]
 Valence, arousal, and dominance #5: [[0.38564402 0.43214017 0.37035757]]
 ```
 
-## Demo
+## Demo (v1.0)
 [![asciicast](https://asciinema.org/a/1XhSclhNuVsfG6bBCPoQLwvN1.svg)](https://asciinema.org/a/1XhSclhNuVsfG6bBCPoQLwvN1)
 
 ## Original repo  
