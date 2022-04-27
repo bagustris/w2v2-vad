@@ -4,8 +4,10 @@
 import os
 import audeer
 import audonnx
-import librosa
+# import librosa
 # import audiofile
+import torchaudio
+import torchaudio.transforms as T
 import argparse
 
 parser = argparse.ArgumentParser(
@@ -43,7 +45,10 @@ if not os.path.exists(dst_path):
         verbose=True,
     )
 
-wav, fs = librosa.load(args.input, sr=16000)
+wav, fs = torchaudio.load(args.input, normalize=True)
+if fs != 16000:
+    sampler = T.Resample(fs, 16000)
+    wav = sampler(wav)
 # wav, fs = audiofile.read(args.input)
 model = audonnx.load(model_root)
 
