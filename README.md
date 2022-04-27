@@ -2,7 +2,7 @@
 A wrapper for Audeering's wav2vector-based dimensional speech emotion recognition (arousal, dominance, and valence).
 
 ## Input-output
-input: any audio file readable by librosa at any sample rate (will be resampled to 16000 Hz on the fly)  
+input: any audio file readable by torchaudio at any sample rate (will be resampled to 16000 Hz on the fly)  
 output:  score of valence, arousal, and dominance in a range [0, 1]  
 
 
@@ -10,7 +10,7 @@ output:  score of valence, arousal, and dominance in a range [0, 1]
     pip3 install -r requirements.txt
     
 ## Usage
-    python3 predict_vad_w2v2.py -input.wav
+    python3 predict_vad_w2v2.py input.wav
 
 ## Arguments
 ```

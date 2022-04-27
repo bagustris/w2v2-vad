@@ -45,11 +45,13 @@ if not os.path.exists(dst_path):
         verbose=True,
     )
 
+# read audiofile
 wav, fs = torchaudio.load(args.input, normalize=True)
 if fs != 16000:
     sampler = T.Resample(fs, 16000)
     wav = sampler(wav)
-# wav, fs = audiofile.read(args.input)
+# convert tensor to array
+wav = wav.numpy()
 model = audonnx.load(model_root)
 
 if args.split == 'chunks':
