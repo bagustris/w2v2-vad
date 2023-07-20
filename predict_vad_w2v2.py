@@ -55,12 +55,13 @@ wav = wav.numpy()
 model = audonnx.load(model_root)
 
 if args.split == 'chunks':
-    for i in range(wav.shape[0] // (fs * args.duration)):
+    for i in range(wav[0].shape[0] // (fs * args.duration)):
         pred = model(
-            wav[0 + i * fs * args.duration:  (i+1) * fs * args.duration], fs)
+            wav[0][(0 + i) * fs * args.duration:  (i+1) * fs * args.duration], fs)
         print(f"Arousal, dominance, valence #{i}: {pred['logits']}")
-    if wav.shape[0] % fs != 0:
-        pred = model(wav[-(wav.shape[0] % fs):], fs)
+    # for the last chunk
+    if wav[0].shape[0] % (fs * args.duration) != 0:
+        pred = model(wav[0][-(wav[0].shape[0] % (fs*args.duration)):], fs)
         print(f"Arousal, dominance, valence #{i+1}: {pred['logits']}")
 elif args.split == 'full':
     pred = model(wav, fs)

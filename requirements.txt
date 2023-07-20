@@ -2,4 +2,4 @@ audeer==1.17.2
 audonnx==0.5.0
 #librosa
 #audiofile==1.0.3
-torchaudio
+torchaudio == 0.13.0

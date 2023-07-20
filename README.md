@@ -5,6 +5,12 @@ A wrapper for Audeering's wav2vector-based dimensional speech emotion recognitio
 input: any audio file readable by torchaudio at any sample rate (will be resampled to 16000 Hz on the fly)  
 output:  score of valence, arousal, and dominance in a range [0, 1]  
 
+## Virtual Environment
+I recommend using a virtual environment to run this script. You can use either `venv` or `conda`. I prefer 
+to use (Mini) conda now over venv. Here is the example.
+    
+    conda create -n w2v2-vad python=3.8
+    conda activate w2v2-vad
 
 ## Installation
     pip3 install -r requirements.txt
@@ -14,7 +20,7 @@ output:  score of valence, arousal, and dominance in a range [0, 1]
 
 ## Arguments
 ```
-Positional: input file  at any sample rate
+Positional: input file at any sample rate
 Optional:  
 -s split, `chunks` or `full`, default is full.  
 -d duration, duration in seconds (if the split is chunks, must be specified)  
