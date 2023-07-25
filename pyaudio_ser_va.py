@@ -1,36 +1,12 @@
-I have the following code running if an audio file is given. I want to change it so it receives from live microhone.
-#!/usr/bin/env python3
 import os
 import numpy as np
 import matplotlib.pyplot as plt
 import audeer
 import audonnx
-import torchaudio
-import torchaudio.transforms as T
 import argparse
-from matplotlib.animation import FuncAnimation
-
 import pyaudio
 
-def audio_generator(chunk_size):
-    p = pyaudio.PyAudio()
-    stream = p.open(format=pyaudio.paInt16,
-                    channels=1,
-                    rate=16000,
-                    input=True,
-                    frames_per_buffer=chunk_size)
-
-    while True:
-        data = stream.read(chunk_size)
-        yield np.frombuffer(data, dtype=np.int16) / 32767.0
-
-    stream.stop_stream()
-    stream.close()
-    p.terminate()
-
-
-def emotion_plot_live(fs, duration):
-    # global sc
+def emotion_plot_live(fs, chunk_size):
     plt.figure(figsize=(7, 7))
     sc = plt.scatter([], [], s=150)
     plt.xlim(-1.1, 1.1)
@@ -44,37 +20,6 @@ def emotion_plot_live(fs, duration):
     plt.xlabel('Valence', size=14)
     plt.ylabel('Arousal', size=14)
     plt.title('Emotion Plot in Valence-Arousal Space', size=16)
-    
-    chunk_size = fs * duration
-    num_chunks = wav[0].shape[0] // chunk_size + 1
-
-    def update_plot(i):
-        '''Update the scatter plot.'''
-        stard_idx = i * fs * duration
-        # for the last chunk
-        if i == num_chunks - 1:
-            end_idx = wav[0].shape[0]
-        else:
-            end_idx = (i + 1) * fs * duration
-        pred = model(
-            wav[0][stard_idx: end_idx], fs)
-        v, a = pred['logits'][:, -1], pred['logits'][:, 0]
-        v, a = 2 * v - 1, 2 * a - 1
-        print(f"valence, arousal #{i}: {v}, {a}")
-        sc.set_offsets(np.column_stack((v, a)))
-
-    ani = FuncAnimation(plt.gcf(), update_plot, frames=num_chunks, repeat=False)
-    plt.show()
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description='Predict Arousal, Dominance, and Valence of audio file and plot it in the Valence-Arousal space.')
-    parser.add_argument('input', type=str, help='Path to the input audio file')
-    parser.add_argument('-s', '--split', type=str, default='full',
-                        help='chunks or full')
-    parser.add_argument('-d', '--duration', type=int, default=10,
-                        help='Duration of each chunk in seconds if `split` is `chunks`')
-    args = parser.parse_args()
 
     model_root = 'model'
     cache_root = 'cache'
@@ -100,17 +45,27 @@ if __name__ == "__main__":
             verbose=True,
         )
 
-    # read audiofile
-    wav, fs = torchaudio.load(args.input, normalize=True)
-    if fs != 16000:
-        sampler = T.Resample(fs, 16000)
-        wav = sampler(wav)
-    # convert tensor to array
-    wav = wav.numpy()
     model = audonnx.load(model_root)
 
-    # Use a generator to capture live audio in chunks
-    generator = audio_generator(fs * args.duration)
+    def update_plot(i, generator):
+        '''Update the scatter plot.'''
+        audio_data = next(generator)
+        pred = model(audio_data, fs)
+        v, a = pred['logits'][:, -1], pred['logits'][:, 0]
+        v, a = 2 * v - 1, 2 * a - 1
+        print(f"valence, arousal #{i}: {v}, {a}")
+        sc.set_offsets(np.column_stack((v, a)))
 
-    # Plot the live data
-    emotion_plot(fs, args.duration)
+    generator = audio_generator(chunk_size)
+
+    ani = FuncAnimation(plt.gcf(), update_plot, fargs=(generator,), frames=100, repeat=False)
+    plt.show()
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description='Predict Arousal, Dominance, and Valence of audio from a live microphone and plot it in the Valence-Arousal space.')
+    parser.add_argument('-d', '--duration', type=int, default=10,
+                        help='Duration of each chunk in seconds if `split` is `chunks`')
+    args = parser.parse_args()
+
+    emotion_plot_live(16000, 16000 * args.duration)
