@@ -53,15 +53,15 @@ def update_plot(frame):
         line.set_ydata(plotdata[:, column])
     return lines
 
-def emotion_plot(ax):
-    '''Create an emotion scatter plot.'''
-    ax.set_xlim([-1.1, 1.1])
-    ax.set_ylim([-1.1, 1.1])
-    ax.set_xticks([-1, 0, 1])
-    ax.set_yticks([-1, 0, 1])
-    ax.grid(True)
-    sc = ax.scatter([], [], s=50, c='red', alpha=0.5)
-    return sc
+# def emotion_plot(ax):
+#     '''Create an emotion scatter plot.'''
+#     ax.set_xlim([-1.1, 1.1])
+#     ax.set_ylim([-1.1, 1.1])
+#     ax.set_xticks([-1, 0, 1])
+#     ax.set_yticks([-1, 0, 1])
+#     ax.grid(True)
+#     sc = ax.scatter([], [], s=50, c='red', alpha=0.5)
+#     return sc
 
 def emotion_plot(fs, duration):
     # global sc
