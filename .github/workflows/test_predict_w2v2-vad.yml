@@ -1,0 +1,24 @@
+name: Test predict_vad_w2v2.py
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Run tests
+      run: |
+        python predict_vad_w2v2.py --input test.wav > output.txt
+        if ! grep -q "Arousal, dominance, valence: [[0.32000706 0.4031646 0.54803556]]" output.txt; then
+          echo "Test failed: output does not match expected value"
+          exit 1
+        fi
