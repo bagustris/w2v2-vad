@@ -4,26 +4,28 @@
 import os
 import audeer
 import audonnx
-# import librosa
-# import audiofile
-import torchaudio
-import torchaudio.transforms as T
+import audresample
+import audiofile
 import argparse
 
 parser = argparse.ArgumentParser(
 	description='Predict Arousal, dominance, and Valence of audio file in the range [0, 1].')
-parser.add_argument('input', type=str)
+parser.add_argument('-i', '--input', type=str, default='bagus-test_16000.wav')
 parser.add_argument('-s', '--split', type=str, default='full',
                     help='chunks or full')
 parser.add_argument('-d', '--duration', type=int, default=10,
                     help='duration of each chunk in seconds if `split` is `chunks`')
 args = parser.parse_args()
 
-model_root = 'model'
-cache_root = 'cache'
+# make ~/models as root directory
+root_dir = os.path.expanduser('~/models/w2v2-vad')
 
-# create cache folder if it doesn't exist
-audeer.mkdir(cache_root)
+# create root directory if it does not exist
+if not os.path.exists(root_dir):
+    os.makedirs(root_dir, exist_ok=True)
+
+cache_root = audeer.mkdir(os.path.join(root_dir, 'cache'))
+model_root = audeer.mkdir(os.path.join(root_dir, 'model'))
 
 
 def cache_path(file):
@@ -31,9 +33,10 @@ def cache_path(file):
 
 
 url = 'https://zenodo.org/record/6221127/files/w2v2-L-robust-12.6bc4a7fd-1.1.0.zip'
+mdl_path = os.path.join(model_root, 'model.onnx')
 dst_path = cache_path('model.zip')
 
-if not os.path.exists(dst_path):
+if not os.path.exists(mdl_path):
     audeer.download_url(
         url,
         dst_path,
@@ -46,22 +49,21 @@ if not os.path.exists(dst_path):
     )
 
 # read audiofile
-wav, fs = torchaudio.load(args.input, normalize=True)
+wav, fs = audiofile.read(args.input)
 if fs != 16000:
-    sampler = T.Resample(fs, 16000)
-    wav = sampler(wav)
-# convert tensor to array
-wav = wav.numpy()
+    wav = audresample.resample(wav, fs, 16000)
+
+# load model
 model = audonnx.load(model_root)
 
 if args.split == 'chunks':
-    for i in range(wav[0].shape[0] // (fs * args.duration)):
+    for i in range(wav.shape[0] // (fs * args.duration)):
         pred = model(
-            wav[0][(0 + i) * fs * args.duration:  (i+1) * fs * args.duration], fs)
+            wav[(0 + i) * fs * args.duration:  (i+1) * fs * args.duration], fs)
         print(f"Arousal, dominance, valence #{i}: {pred['logits']}")
     # for the last chunk
-    if wav[0].shape[0] % (fs * args.duration) != 0:
-        pred = model(wav[0][-(wav[0].shape[0] % (fs*args.duration)):], fs)
+    if wav.shape[0] % (fs * args.duration) != 0:
+        pred = model(wav[-(wav.shape[0] % (fs*args.duration)):], fs)
         print(f"Arousal, dominance, valence #{i+1}: {pred['logits']}")
 elif args.split == 'full':
     pred = model(wav, fs)
