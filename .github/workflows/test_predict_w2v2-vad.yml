@@ -17,7 +17,7 @@ jobs:
         pip install -r requirements.txt
     - name: Run tests
       run: |
-        python predict_vad_w2v2.py --input test.wav > output.txt
+        python predict_vad_w2v2.py > output.txt
         if ! grep -q "Arousal, dominance, valence: [[0.32000706 0.4031646 0.54803556]]" output.txt; then
           echo "Test failed: output does not match expected value"
           exit 1
