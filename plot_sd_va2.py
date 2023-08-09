@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Plot the live valence-arousal space from microphone signals."""
+"""Plot the live microphone signal(s) with matplotlib.
+Matplotlib and NumPy have to be installed.
+"""
 import argparse
 import queue
 import sys
@@ -7,10 +9,8 @@ from matplotlib.animation import FuncAnimation
 import matplotlib.pyplot as plt
 import numpy as np
 import sounddevice as sd
-import audonnx
-import os
-import audeer
 
+    
 def int_or_str(text):
     """Helper function for argument parsing."""
     try:
@@ -22,9 +22,16 @@ def audio_callback(indata, frames, time, status):
     """This is called (from a separate thread) for each audio block."""
     if status:
         print(status, file=sys.stderr)
+    q.put(indata)
+    v, a = model(indata[:, 0], args.samplerate)['logits'][-1, 0], model(indata[:, 0], args.samplerate)['logits'][0, 0]
+    v, a = 2 * v - 1, 2 * a - 1
+    global plotdata
+    shift = len(indata)
+    plotdata = np.roll(plotdata, -shift, axis=0)
+    plotdata[-shift:, 0] = np.arange(len(plotdata) - shift, len(plotdata))
+    plotdata[-shift:, 1] = v
+    plotdata[-shift:, 2] = a
 
-    # Fancy indexing with mapping creates a (necessary!) copy:
-    q.put(indata[::args.downsample, mapping])
 
 def update_plot(frame):
     """This is called by matplotlib for each plot update."""
@@ -34,17 +41,11 @@ def update_plot(frame):
             data = q.get_nowait()
         except queue.Empty:
             break
-
         shift = len(data)
         plotdata = np.roll(plotdata, -shift, axis=0)
-        plotdata[-shift:, :] = data
-
-    # Convert audio data to float and compute valence and arousal predictions
-    audio_data = plotdata[:, 0].astype(np.float32)
-    v, a = model(audio_data, args.samplerate)['logits'][-1, 0], model(audio_data, args.samplerate)['logits'][0, 0]
-    v, a = 2 * v - 1, 2 * a - 1
-
-    sc.set_offsets(np.column_stack((v, a)))
+        plotdata[-shift:, 0] = np.arange(len(plotdata) - shift, len(plotdata))
+        plotdata[-shift:, 1:] = data
+    sc.set_offsets(plotdata[:, 1:])
     return (sc,)
 
 if __name__ == "__main__":
@@ -70,7 +71,7 @@ if __name__ == "__main__":
         '-w', '--window', type=float, default=200, metavar='DURATION',
         help='visible time slot (default: %(default)s ms)')
     parser.add_argument(
-        '-i', '--interval', type=float, default=300,
+        '-i', '--interval', type=float, default=30,
         help='minimum time between plot updates (default: %(default)s ms)')
     parser.add_argument(
         '-b', '--blocksize', type=int, help='block size (in samples)')
@@ -84,62 +85,32 @@ if __name__ == "__main__":
         parser.error('argument CHANNEL: must be >= 1')
     mapping = [c - 1 for c in args.channels]  # Channel numbers start with 1
     q = queue.Queue()
-
-    # load model, download if necessary
-    model_root = '~/models/w2v2-vad/model'
-    cache_root = '~/models/w2v2-vad/cache'
-
-    # create cache folder if it doesn't exist
-    audeer.mkdir(cache_root)
-    
-    url = 'https://zenodo.org/record/6221127/files/w2v2-L-robust-12.6bc4a7fd-1.1.0.zip'
-    mdl_path = os.path.join(os.path.expanduser(model_root), 'model.onnx')
-    dst_path = os.path.join(os.path.expanduser(cache_root), 'model.zip')
-        
-    if not os.path.exists(mdl_path):
-        audeer.download_url(
-            url,
-            dst_path,
-            verbose=True,
-        )
-        audeer.extract_archive(
-            dst_path,
-            model_root,
-            verbose=True,
-        )
-
-    model = audonnx.load(model_root)
-
     try:
         if args.samplerate is None:
             device_info = sd.query_devices(args.device, 'input')
             args.samplerate = device_info['default_samplerate']
-
         length = int(args.window * args.samplerate / (1000 * args.downsample))
-        # length = 2 * args.samplerate
-        plotdata = np.zeros((length, len(args.channels))) 
-
-        plt.figure(figsize=(7, 7))
-        sc = plt.scatter([], [], s=150)
-        plt.xlim(-1.1, 1.1)
-        plt.ylim(-1.1, 1.1)
-        plt.vlines(0, -1.1, 1.1, linestyle='dashed', lw=1)
-        plt.hlines(0, -1.1, 1.1, linestyle='dashed', lw=1)
+        plotdata = np.zeros((length, len(args.channels))) * 5 # 5 seconds
+        fig, ax = plt.figure(figsize=(7, 7))
+        sc = ax.scatter([], [], s=150)
+        ax.xlim(-1.1, 1.1)
+        ax.ylim(-1.1, 1.1)
+        ax.vlines(0, -1.1, 1.1, linestyle='dashed', lw=1)
+        ax.hlines(0, -1.1, 1.1, linestyle='dashed', lw=1)
         ticks = range(-1, 2)
-        plt.xticks(ticks, size=12)
-        plt.yticks(ticks, size=12)
-        plt.grid(alpha=0.9, linestyle='--')
-        plt.xlabel('Valence', size=14)
-        plt.ylabel('Arousal', size=14)
-        plt.title('Emotion Plot in Valence-Arousal Space', size=16)
-        plt.text(0.01, 0.99, f'Sample rate: {int(args.samplerate/args.downsample)} Hz',
-                 transform=plt.gca().transAxes, va='top', ha='left')
-        plt.tight_layout()
-
-        ani = FuncAnimation(plt.gcf(), update_plot, cache_frame_data=False, 
-                            interval=args.interval)
-        with sd.InputStream(device=args.device, channels=max(args.channels),
-                            samplerate=args.samplerate, callback=audio_callback):
+        ax.xticks(ticks, size=12)
+        ax.yticks(ticks, size=12)
+        ax.grid(alpha=0.9, linestyle='--')
+        ax.xlabel('Valence', size=14)
+        ax.ylabel('Arousal', size=14)
+        ax.title('Emotion Plot in Valence-Arousal Space', size=16)
+        ax.text(0.01, 0.99, f'Sample rate: {args.samplerate/args.downsample} Hz', transform=ax.transAxes, va='top', ha='left')
+        fig.tight_layout(pad=0)
+        stream = sd.InputStream(
+            device=args.device, channels=max(args.channels),
+            samplerate=args.samplerate, callback=audio_callback)
+        ani = FuncAnimation(fig, update_plot, blit=True)
+        with stream:
             plt.show()
 
     except Exception as e:

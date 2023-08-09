@@ -89,17 +89,18 @@ if __name__ == "__main__":
     q = queue.Queue()
 
     # load model, download if necessary
-    model_root = 'model'
-    cache_root = 'cache'
+    model_root = '~/models/w2v2-vad/model'
+    cache_root = '~/models/w2v2-vad/cache'
 
     # create cache folder if it doesn't exist
     audeer.mkdir(cache_root)
     
-    model_root = 'model'
+    
     url = 'https://zenodo.org/record/6221127/files/w2v2-L-robust-12.6bc4a7fd-1.1.0.zip'
-    dst_path = os.path.join(model_root, 'model.zip')
+    mdl_path = os.path.join(os.path.expanduser(model_root), 'model.onnx')
+    dst_path = os.path.join(os.path.expanduser(cache_root), 'model.zip')
         
-    if not os.path.exists(dst_path):
+    if not os.path.exists(mdl_path):
         audeer.download_url(
             url,
             dst_path,
